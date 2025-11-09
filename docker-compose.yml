@@ -1,0 +1,95 @@
+version: "3.8"
+
+services:
+  traefik:
+    image: traefik:v2.10
+    command:
+      - "--providers.docker=true"
+      - "--entrypoints.web.address=:80"
+      - "--api.insecure=true"
+    ports:
+      - "80:80"
+      - "8081:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml
+    networks:
+      - web
+
+  front:
+    build: ./web
+    container_name: ${APP_NAME}-front
+    volumes:
+      - ./web:/usr/src/app
+      - ./web/node_modules:/usr/src/app/node_modules
+      - ./shared:/usr/src/shared/
+    depends_on:
+      - api
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.front.rule=Host(`inventrak.localhost`)"
+      - "traefik.http.routers.front.entrypoints=web"
+    networks:
+      - web
+
+  api:
+    build:
+      context: ./api
+      args:
+        API_PORT: ${API_PORT} ${API_PORT}
+    environment:
+      - API_PORT=${API_PORT}
+    container_name: ${APP_NAME}-api
+    volumes:
+      - ./api:/usr/src/app
+      - ./api/node_modules:/usr/src/app/node_modules
+      - ./shared:/usr/src/shared/
+
+    ports:
+      - "8000:8000"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api.rule=Host(`api.inventrak.localhost`)"
+      - "traefik.http.routers.api.entrypoints=web"
+    networks:
+      - web
+
+  db:
+    container_name: ${APP_NAME}-db
+    image: postgres:15
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_DATABASE}
+    env_file:
+      - .env
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - web
+
+  pgadmin:
+    container_name: ${APP_NAME}-pgadmin
+    image: dpage/pgadmin4:latest
+    env_file:
+      - .env
+
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=dave@test.com
+      - PGADMIN_DEFAULT_PASSWORD=secret
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.pgadmin.rule=Host(`db.inventrak.localhost`)"
+      - "traefik.http.routers.pgadmin.entrypoints=web"
+    depends_on:
+      - db
+    networks:
+      - web
+networks:
+  web:
+    external: false
+
+volumes:
+  pgdata:
