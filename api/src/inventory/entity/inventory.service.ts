@@ -19,6 +19,12 @@ export class InventoryService {
     });
   }
 
+  getById(id: string) {
+    return this.inventoryModel.findOne({
+      where: { id },
+    });
+  }
+
   create(payload: CreateInventoryDto) {
     const data = { ...payload, id: randomUUID() } as InventoryModel;
     return this.inventoryModel.create(data);
