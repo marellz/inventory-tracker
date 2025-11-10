@@ -1,7 +1,10 @@
 <script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router'
+import { RouterLink, RouterView, useRouter } from 'vue-router'
 import Container from './components/wrapper/Container.vue';
 import { computed } from 'vue';
+import { useAuthStore } from './stores/auth';
+const store = useAuthStore()
+
 interface Link {
   path: string;
   label: string;
@@ -13,11 +16,18 @@ const unAuthLinks: Link[] = [
 ]
 
 const authLinks: Link[] = [
-  { path: "/inventory", label: "Inventory" },
+  { path: "/inventory", label: "View my inventory", variant: "solid" },
 ]
 
-const isAuthenticated = computed(() => false)
+const isAuthenticated = computed(() => store.isAuthenticated)
 const displayLinks = computed(() => isAuthenticated.value ? authLinks : unAuthLinks)
+
+const router = useRouter()
+const logout = () => {
+  store.logUser(undefined)
+  localStorage.removeItem('token')
+  router.push('/')
+}
 
 </script>
 
@@ -38,8 +48,13 @@ const displayLinks = computed(() => isAuthenticated.value ? authLinks : unAuthLi
                     {{ label }}
                   </span>
                 </UButton>
-
               </RouterLink>
+            </li>
+            <li v-if="isAuthenticated">
+              <UButton variant="ghost" @click="logout">
+                <UIcon name="i-lucide-log-out" />
+                <span>Logout</span>
+              </UButton>
             </li>
           </ul>
         </div>

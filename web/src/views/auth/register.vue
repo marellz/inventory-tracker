@@ -3,6 +3,7 @@
     <UPageCard class="w-full max-w-md mx-auto">
       <UAuthForm :schema="registerSchema" title="Register" description="Fill in your details to create an account."
         icon="i-lucide-user" :fields="fields" @submit="onSubmit" />
+      <UAlert v-if="error" color="error" title="Error" :description="error" icon="i-lucide-triangle-alert" />
       <div class="mt-6 text-center">
         <p class="text-sm">
           Already have an account? <RouterLink to="/login" class="underline hover:text-primary">Login here.</RouterLink>
@@ -14,8 +15,18 @@
 <script lang="ts" setup>
 import type { FormSubmitEvent, AuthFormField } from '@nuxt/ui'
 import { registerSchema, type RegisterSchema } from '@/types/auth.types'
+import { useAuth } from '@/composables/useAuth'
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import api from '@/plugin/api'
+import { useAuthStore } from '@/stores/auth'
 
 const toast = useToast()
+const auth = useAuth()
+const authStore = useAuthStore()
+
+const error = ref<string | undefined>()
+const router = useRouter()
 
 const fields: AuthFormField[] = [
   {
@@ -38,7 +49,23 @@ const fields: AuthFormField[] = [
     required: true
   }]
 
-function onSubmit(payload: FormSubmitEvent<RegisterSchema>) {
-  console.log(payload)
+
+const onSubmit = async (payload: FormSubmitEvent<RegisterSchema>) => {
+  try {
+    const { data } = await auth.register(payload.data)
+
+    if (!(data.accessToken && data.user)) throw new Error('Error logging you in')
+    localStorage.setItem('token', data.accessToken)
+    authStore.logUser(data.user)
+    router.push('/inventory')
+    toast.add({
+      title: "Successfully registered!"
+    })
+
+  } catch (err) {
+    console.error(err)
+    error.value = "Invalid credentials. Please try again"
+  }
+
 }
 </script>
