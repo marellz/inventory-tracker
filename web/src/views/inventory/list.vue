@@ -40,10 +40,27 @@
 import InventoryForm from '@/components/feat/inventory/InventoryForm.vue';
 import Container from '@/components/wrapper/Container.vue';
 import { useInventoryStore } from '@/stores/inventory';
+import { onMounted } from 'vue';
 
-const { items } = useInventoryStore()
+const { items, getAll } = useInventoryStore()
+const toast = useToast()
 
 const overlay = useOverlay()
 const modal = overlay.create(InventoryForm)
+
+const fetch = async () => {
+  try {
+    await getAll()
+  } catch (error) {
+    toast.add({
+      title: "Error getting Inventory items",
+      color: "error"
+    })
+  }
+}
+
+onMounted(() => {
+  fetch()
+})
 
 </script>
