@@ -16,7 +16,7 @@ export interface InventoryCategory {
 }
 
 export const inventorySchema = z.object({
-  title: z.string('Item name is required'),
+  name: z.string('Item name is required'),
   category: z.string('Category is required'),
   description: z.string().optional().nullable(),
   quantity: z.coerce.number<number>('Quantity is required').min(0, 'Quantity is required'),

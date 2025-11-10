@@ -7,8 +7,8 @@
 
           <div class="grid md:grid-cols-2 gap-4">
 
-            <UFormField label="Name" name="title">
-              <UInput v-model="state.title" class="w-full" />
+            <UFormField label="Name" name="name">
+              <UInput v-model="state.name" class="w-full" />
             </UFormField>
 
             <UFormField label="Category" name="category">
@@ -33,7 +33,7 @@
                 Cancel
               </UButton>
               <UButton type="submit">
-                Submit
+                {{ isEdit ? 'Update' : "Create" }}
               </UButton>
 
             </div>
@@ -46,17 +46,23 @@
   </UModal>
 </template>
 <script lang="ts" setup>
-import { inventorySchema, type InventorySchema } from '@/types/inventory.types';
+import { inventorySchema, type InventoryItem, type InventorySchema } from '@/types/inventory.types';
 import type { FormSubmitEvent } from '@nuxt/ui';
-import { reactive, ref, } from 'vue';
+import { computed, onMounted, reactive, ref, } from 'vue';
 
 const props = defineProps<{
-  open?: boolean
+  open?: boolean,
+  form?: InventoryItem
 }>()
 
-const emit = defineEmits<{ close: [boolean] }>()
+const emit = defineEmits<{
+  close: [bool: boolean]
+  create: [form: InventorySchema]
+  update: [id: string, form: InventorySchema]
+}>()
 
 const show = ref(props.open)
+const isEdit = computed(() => props.form !== undefined)
 
 const categories = [
   'Tools',
@@ -74,20 +80,32 @@ const state = reactive<Partial<InventorySchema>>({
 })
 
 const onSubmit = (payload: FormSubmitEvent<InventorySchema>) => {
-  console.log('new inventory item!', payload)
-
-  // emit('submit', payload)
+  if (props.form) {
+    emit('update', props.form.id, state as InventorySchema)
+  } else {
+    emit('create', state as InventorySchema)
+  }
 }
 
 const handleCancel = () => {
   state.category = "Tools"
-  state.title = undefined
+  state.name = undefined
   state.category = undefined
   state.price = undefined
   state.quantity = undefined
 
   emit('close', false)
 }
+
+onMounted(() => {
+  if (!props.form) return
+
+  state.name = props.form.name
+  state.category = props.form.category
+  state.price = props.form.price
+  state.quantity = props.form.quantity
+  state.description = props.form.description
+})
 
 
 </script>
