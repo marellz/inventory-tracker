@@ -8,6 +8,13 @@ import {
   Model,
 } from 'sequelize-typescript';
 
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  password: string;
+}
+
 @Table({
   tableName: 'users',
   freezeTableName: true,

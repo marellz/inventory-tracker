@@ -11,8 +11,8 @@ export class UserService {
     private userModel: typeof UserModel,
   ) {}
 
-  async getByEmail(email: string) {
-    return this.userModel.findOne({
+  async getByEmail(email: string): Promise<UserModel | null> {
+    return await this.userModel.findOne({
       where: {
         email,
       },
