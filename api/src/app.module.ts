@@ -5,6 +5,7 @@ import { SequelizeModule } from '@nestjs/sequelize';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/entity/auth.module';
 import { UserModule } from './user/entity/user.module';
+import { InventoryModule } from './inventory/entity/inventory.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { UserModule } from './user/entity/user.module';
     }),
     AuthModule,
     UserModule,
+    InventoryModule,
   ],
   controllers: [AppController],
   providers: [AppService],
