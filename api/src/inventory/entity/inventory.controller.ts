@@ -9,6 +9,7 @@ import {
   Post,
   Put,
   Request,
+  UnauthorizedException,
   UseGuards,
   ValidationPipe,
 } from '@nestjs/common';
@@ -16,22 +17,24 @@ import { InventoryService } from './inventory.service';
 import { CreateInventoryDto, UpdateInventoryDto } from '../dto/inventory.dto';
 import { type AuthenticatedRequest, AuthGuard } from 'src/auth/auth.guard';
 
-// todo: get from request/session
-const user_id = 'f146b53c-1606-468e-b990-85484c14c3dc';
-
 @UseGuards(AuthGuard)
 @Controller('inventory')
 export class InventoryController {
   constructor(private inventoryService: InventoryService) {}
   @Get()
-  getAll() {
+  getAll(@Request() request: AuthenticatedRequest) {
+    const user_id = request.user?.id;
+    if (!user_id) throw new UnauthorizedException();
     return this.inventoryService.getAll(user_id);
   }
 
   @Post()
   create(
     @Body(new ValidationPipe()) payload: Omit<CreateInventoryDto, 'user_id'>,
+    @Request() request: AuthenticatedRequest,
   ) {
+    const user_id = request.user?.id;
+    if (!user_id) throw new UnauthorizedException();
     return this.inventoryService.create({ ...payload, user_id });
   }
 
@@ -43,18 +46,25 @@ export class InventoryController {
   ) {
     const item = await this.inventoryService.getById(id);
     if (!item) throw new NotFoundException();
-    if (item.get().user_id !== request.user?.id) throw new ForbiddenException();
+    if (item.get().user_id !== request.user?.id)
+      throw new ForbiddenException(`You do not own this resource.`);
 
     const update = await this.inventoryService.update(id, payload);
-    return update[1];
+    return update[1][0];
   }
 
   @Delete(`:id`)
-  async destroy(@Param() id: string, @Request() request: AuthenticatedRequest) {
-    const inventoryItem = await this.inventoryService.getById(id);
-    if (!inventoryItem) throw new NotFoundException();
-    if (inventoryItem?.user_id !== request.user?.id)
-      throw new ForbiddenException();
+  async destroy(
+    @Param('id') id: string,
+    @Request() request: AuthenticatedRequest,
+  ) {
+    const _item = await this.inventoryService.getById(id);
+    if (!_item) throw new NotFoundException();
+    const inventoryItem = _item?.get();
+    if (inventoryItem.user_id !== request.user?.id)
+      throw new ForbiddenException(
+        `You do not own this resource.`,
+      );
     return this.inventoryService.destroy(id);
   }
 }

@@ -31,8 +31,6 @@ export class InventoryModel extends Model<InventoryModel> {
   @Column({ allowNull: false })
   user_id: string;
 
-  @Unique
-  @Column
   @Column({ allowNull: false })
   category: string;
 

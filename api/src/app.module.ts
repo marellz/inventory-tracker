@@ -21,6 +21,8 @@ import { AuthService } from './auth/entity/auth.service';
       password: process.env.DB_PASSWORD,
       database: process.env.DB_DATABASE,
       autoLoadModels: true,
+      synchronize: true,
+      sync: { alter: true },
     }),
     AuthModule,
     UserModule,
