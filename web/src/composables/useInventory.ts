@@ -15,7 +15,7 @@ export const useInventory = () => {
   }
 
   const update = async (id: string, payload: Partial<InventorySchema>) => {
-    return await api.post(`/inventory/${id}`, payload)
+    return await api.put(`/inventory/${id}`, payload)
   }
 
   const destroy = async (id: string) => {
